@@ -11,13 +11,21 @@ class ZipCodeController extends Controller
         if(strlen($zip_code) == 5){
             $code =zipCode::where("zip_code" , $zip_code)->get();
             if(count($code) != 0){
-                $codex= json_encode($code[0], JSON_UNESCAPED_UNICODE);                
-                $pattern = array("/".$code[0]['locality']."/", "/".$code[0]['federal_entity']['name']."/", "/".$code[0]['settlements'][0]['zone_type']."/");
+                $codex= json_encode($code[0], JSON_UNESCAPED_UNICODE);
+                $pattern = array(
+                    "/".$code[0]['locality']."/", 
+                    "/".$code[0]['federal_entity']['name']."/",
+                );
                 $replace = array(
                     mb_convert_case($code[0]['locality'], MB_CASE_UPPER, "UTF-8"),
-                    mb_convert_case($code[0]['federal_entity']['name'], MB_CASE_UPPER, "UTF-8"), 
-                    mb_convert_case($code[0]['settlements'][0]['zone_type'], MB_CASE_UPPER, "UTF-8")
+                    mb_convert_case($code[0]['federal_entity']['name'], MB_CASE_UPPER, "UTF-8"),
                 );
+                foreach ($code[0]['settlements'] as $k=>$v) {
+                    array_push($pattern,"/".$v['name']."/");
+                    array_push($pattern,"/".$v['zone_type']."/");
+                    array_push($replace,mb_convert_case($v['name'], MB_CASE_UPPER, "UTF-8"));
+                    array_push($replace,mb_convert_case($v['zone_type'], MB_CASE_UPPER, "UTF-8"));
+                }
                 $resultado =preg_replace($pattern, $replace, $codex, -1 );
                 return Helper::quitarAcentos($resultado);
             }else{
